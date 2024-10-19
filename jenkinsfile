@@ -13,20 +13,21 @@ pipeline {
 */
     stages {
 
-        stage('Build Docker image') {
+        stage('Terraform runtime') {
             agent {
                 docker {
-                    image 'amazon/aws-cli'
+                    image 'hashicorp/terraform'
                     reuseNode true
-                    
+                    args "-u root -v /var/run/docker.sock:/var/run/docker.sock --entrypoint=''"
                 }
             }
 
             steps {
                 withCredentials([usernamePassword(credentialsId: 'mveekshitha-aws', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
                     sh '''
-                        aws --version
-                        aws s3 ls
+                        terraform --version
+                        terraform init
+                        terraform plan
                     '''
                 }
             }
