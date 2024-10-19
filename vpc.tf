@@ -80,3 +80,36 @@ resource "aws_route_table_association" "c" {
   subnet_id      = aws_subnet.private_subnet02.id
   route_table_id = aws_route_table.dev-private-01.id
 }
+
+resource "aws_security_group" "k8s" {
+  name        = "allow_tls"
+  description = "Allow TLS inbound traffic and all outbound traffic"
+  vpc_id      = aws_vpc.dev.id
+
+  tags = {
+    Name = "k8s-sg"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "k8s-inbound-443" {
+  security_group_id = aws_security_group.k8s.id
+  cidr_ipv4         = aws_vpc.dev.cidr_block
+  from_port         = 443
+  ip_protocol       = "tcp"
+  to_port           = 443
+}
+
+resource "aws_vpc_security_group_ingress_rule" "k8s-inbound-80" {
+  security_group_id = aws_security_group.allow_tls.id
+  cidr_ipv6         = aws_vpc.dev.cidr_block
+  from_port         = 80
+  ip_protocol       = "tcp"
+  to_port           = 80
+}
+
+resource "aws_vpc_security_group_egress_rule" "k8s-outbound-all" {
+  security_group_id = aws_security_group.allow_tls.id
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "-1" # semantically equivalent to all ports
+}
+
